@@ -1,0 +1,1533 @@
+<title>見積書作成（歯科）</title>
+<style>
+  :root{
+    --accent:#29508f;
+    --accent-soft:#dce6f5;
+    --chrome-bg:#eff2f6;
+    --panel:#ffffff;
+    --panel-ink:#1c2430;
+    --panel-sub:#5b6675;
+    --border:#d6dce4;
+    --danger:#b3352f;
+    --sheet-bg:#ffffff;
+    --sheet-ink:#1c2430;
+    --sheet-line:#333c48;
+    --sheet-line-soft:#c9ced6;
+    --bar:#d9dce1;
+    --shadow:0 6px 24px rgba(28,36,48,.12);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --accent:#7ea3dd; --accent-soft:#263a5a; --chrome-bg:#141922;
+      --panel:#1e2530; --panel-ink:#e6eaf1; --panel-sub:#98a2b3;
+      --border:#343e4d; --danger:#e07b76; --shadow:0 6px 24px rgba(0,0,0,.45);
+    }
+  }
+  :root[data-theme="light"]{
+    --accent:#29508f; --accent-soft:#dce6f5; --chrome-bg:#eff2f6;
+    --panel:#ffffff; --panel-ink:#1c2430; --panel-sub:#5b6675;
+    --border:#d6dce4; --danger:#b3352f; --shadow:0 6px 24px rgba(28,36,48,.12);
+  }
+  :root[data-theme="dark"]{
+    --accent:#7ea3dd; --accent-soft:#263a5a; --chrome-bg:#141922;
+    --panel:#1e2530; --panel-ink:#e6eaf1; --panel-sub:#98a2b3;
+    --border:#343e4d; --danger:#e07b76; --shadow:0 6px 24px rgba(0,0,0,.45);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--chrome-bg);
+    color:var(--panel-ink);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",Meiryo,sans-serif;
+    font-size:15px;
+    -webkit-text-size-adjust:100%;
+  }
+
+  /* ---------- app chrome ---------- */
+  .toolbar{
+    position:sticky;top:0;z-index:20;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    padding:10px 14px;
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+  }
+  .toolbar h1{
+    font-size:15px;font-weight:600;margin:0 auto 0 0;
+    letter-spacing:.08em;color:var(--panel-sub);
+  }
+  button{
+    font:inherit;color:var(--panel-ink);
+    background:var(--panel);border:1px solid var(--border);
+    border-radius:8px;padding:9px 14px;min-height:42px;
+    cursor:pointer;
+  }
+  button:active{transform:translateY(1px);}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;letter-spacing:.05em;}
+  @media (prefers-color-scheme: dark){ .btn-primary{color:#0f1520;} }
+  :root[data-theme="dark"] .btn-primary{color:#0f1520;}
+  :root[data-theme="light"] .btn-primary{color:#fff;}
+
+  .stage{max-width:900px;margin:0 auto;padding:16px 12px 60px;}
+
+  /* ---------- A4 sheet ---------- */
+  .sheet-wrap{overflow:hidden;}
+  .sheet{
+    width:210mm;min-height:295mm;
+    display:flex;flex-direction:column;
+    background:#fff;color:#14171c;
+    box-shadow:var(--shadow);
+    padding:16mm 18mm 14mm;
+    transform-origin:top left;
+    font-family:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP","MS PMincho",serif;
+    font-size:10.5pt;line-height:1.5;
+    font-variant-numeric:tabular-nums;
+  }
+  .sheet input,.sheet select{
+    font:inherit;color:inherit;background:transparent;
+    border:none;border-bottom:1px dashed transparent;
+    padding:2px 3px;border-radius:0;width:100%;
+  }
+  .sheet input:hover{border-bottom-color:var(--sheet-line-soft);}
+  .sheet input:focus,.sheet select:focus{
+    outline:none;border-bottom:1px solid var(--accent);
+    background:rgba(41,80,143,.05);
+  }
+  .sheet ::placeholder{color:#a8b0bc;}
+
+  .doc-title{
+    text-align:center;
+    font-size:18pt;font-weight:600;letter-spacing:.9em;text-indent:.9em;
+    margin:0 0 2.5mm;
+    color:#1d5286;
+  }
+  .title-rule{
+    height:1.2mm;
+    border-top:.35mm solid #1d5286;
+    border-bottom:.8mm solid #1d5286;
+    margin-bottom:9mm;
+  }
+  .head-row{display:flex;align-items:flex-end;gap:6mm;}
+  .patient{
+    display:flex;align-items:baseline;gap:2mm;flex:1;max-width:92mm;
+    border-bottom:.3mm solid #14171c;padding-bottom:1mm;
+    align-self:flex-start;margin-top:6mm;
+  }
+  .patient input{font-size:13.5pt;font-weight:500;letter-spacing:.1em;}
+  .patient .sama{flex:none;font-size:11.5pt;}
+  .issuer{flex:none;width:66mm;display:flex;flex-direction:column;gap:.5mm;}
+  .issuer input{text-align:right;padding:1px 3px;}
+  .made-date{display:flex;align-items:baseline;justify-content:flex-end;gap:2mm;font-size:10pt;margin-bottom:2mm;}
+  .made-date label{flex:none;color:#56789c;font-size:8.5pt;}
+  .made-date input{width:30mm;text-align:right;}
+  .issuer .c-name{font-size:11pt;font-weight:600;color:#1d5286;letter-spacing:.05em;}
+  .issuer .c-addr{font-size:8.5pt;color:#3c4652;}
+  .issuer .c-tel{font-size:8.5pt;color:#3c4652;}
+
+  .grand{
+    margin-top:5mm;
+    background:#e9f1f8;
+    border-top:.3mm solid #1d5286;
+    border-bottom:.3mm solid #1d5286;
+    padding:4mm 0;
+    display:flex;justify-content:center;align-items:baseline;gap:7mm;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  .grand .label{font-size:10.5pt;letter-spacing:.5em;}
+  .grand .amount{font-size:17pt;font-weight:600;letter-spacing:.05em;color:#1d5286;}
+  .grand .tax-note{font-size:8.5pt;color:#56789c;}
+
+  /* ---------- item table ---------- */
+  .items-area{margin-top:6mm;}
+  table.items{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;}
+  table.items th{
+    background:#e9f1f8;color:#1d5286;
+    font-weight:600;font-size:9pt;letter-spacing:.25em;
+    padding:2.2mm 1.5mm;text-align:center;
+    border-top:.35mm solid #1d5286;border-bottom:.35mm solid #1d5286;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  table.items td{
+    border-bottom:.15mm solid #d3dde7;
+    padding:1.2mm 1mm;vertical-align:middle;
+  }
+  .col-teeth{width:34mm;}
+  .col-qty{width:12mm;}
+  .col-price{width:24mm;}
+  .col-amt{width:27mm;}
+  .col-del{width:11mm;}
+  td.c-name input{font-size:10.5pt;font-weight:500;}
+  td.c-qty input{text-align:center;font-size:10.5pt;}
+  td.c-price input{text-align:right;font-size:10.5pt;}
+  td.c-amt{text-align:right;font-size:10.5pt;font-weight:500;padding-right:2mm;}
+  .teeth{
+    position:relative;width:30mm;margin:0 auto;
+    display:grid;grid-template-columns:1fr 1fr;
+    font-size:9pt;letter-spacing:.2em;
+    cursor:pointer;border-radius:1mm;
+  }
+  .teeth:hover{background:rgba(29,82,134,.07);}
+  .teeth:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .teeth .q{
+    border:0 solid #3c4652;
+    min-height:5.5mm;display:flex;align-items:center;
+    padding:.2mm 1.2mm;white-space:nowrap;
+  }
+  .teeth.empty .q{border-color:#c5d3e2;}
+  .teeth .q.ur{border-right-width:.3mm;border-bottom-width:.3mm;justify-content:flex-end;}
+  .teeth .q.ul{border-bottom-width:.3mm;}
+  .teeth .q.lr{border-right-width:.3mm;justify-content:flex-end;}
+  .teeth-hint{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:7.5pt;letter-spacing:.15em;color:var(--accent);opacity:.75;
+    pointer-events:none;
+  }
+  .item-del{
+    width:34px;min-height:34px;padding:2px;border-radius:6px;
+    border:1px solid var(--sheet-line-soft);color:#8c95a3;background:#fff;
+    font-size:12px;line-height:1;display:block;margin:0 auto;
+  }
+  .item-del:hover{color:var(--danger);border-color:var(--danger);}
+  .items-empty{
+    border:1.5px dashed var(--sheet-line-soft);color:#a8b0bc;
+    text-align:center;padding:8mm 4mm;font-size:10pt;margin-top:2mm;
+  }
+
+  /* ---------- note box ---------- */
+  .note-box{
+    margin-top:7mm;
+    border:.2mm solid #a9bcd2;border-radius:1mm;
+    padding:2.5mm 3mm;
+    display:flex;gap:4mm;align-items:flex-start;
+    min-height:18mm;
+  }
+  .note-box .note-label{flex:none;color:#1d5286;font-size:9pt;letter-spacing:.3em;padding-top:1mm;}
+  .note-box textarea{
+    flex:1;border:none;resize:none;background:transparent;
+    font:inherit;font-size:9.5pt;line-height:1.7;color:inherit;
+    min-height:14mm;padding:0;
+  }
+  .note-box textarea:focus{outline:none;}
+
+  /* ---------- totals ---------- */
+  .totals-row{display:flex;justify-content:flex-end;margin-top:3mm;}
+  .totals-rule{display:none;}
+  .totals{
+    width:68mm;font-size:10.5pt;
+  }
+  .totals .row{display:flex;justify-content:space-between;align-items:baseline;padding:1.2mm 1mm;}
+  .totals .row .amt{font-weight:500;}
+  .totals .row.total{
+    font-weight:600;font-size:12.5pt;
+    color:#1d5286;
+    border-top:.3mm solid #1d5286;
+    border-bottom:1mm double #1d5286;
+    margin-top:1mm;padding:2mm 1mm;
+  }
+  .totals select{
+    width:auto;border:none;font-size:8.5pt;padding:0 0 0 1mm;color:#555;
+    -webkit-appearance:none;appearance:none;background:transparent;
+  }
+  .totals-bottom-rule{display:none;}
+
+  /* ---------- price list panel ---------- */
+  .pricelist{
+    margin-top:20px;background:var(--panel);
+    border:1px solid var(--border);border-radius:12px;padding:14px;
+  }
+  .pl-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
+  .pl-head h2{font-size:14px;margin:0 auto 0 0;letter-spacing:.06em;}
+  .pl-hint{font-size:12px;color:var(--panel-sub);margin:0 0 10px;}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+  .tab{
+    border:1px solid var(--border);border-radius:999px;
+    background:var(--chrome-bg);padding:8px 15px;min-height:40px;
+    font-size:14px;
+  }
+  .tab.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+  :root[data-theme="dark"] .tab.active{color:#0f1520;}
+  @media (prefers-color-scheme: dark){ .tab.active{color:#0f1520;} }
+  :root[data-theme="light"] .tab.active{color:#fff;}
+
+  .group{margin-bottom:14px;}
+  .group h3{
+    font-size:12px;color:var(--panel-sub);letter-spacing:.1em;
+    margin:0 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border);
+  }
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    display:flex;align-items:baseline;gap:8px;
+    border:1px solid var(--border);border-radius:999px;
+    background:var(--chrome-bg);padding:9px 16px;min-height:42px;
+    text-align:left;
+  }
+  .chip .price{color:var(--panel-sub);font-size:13px;font-variant-numeric:tabular-nums;}
+  .chip:hover{border-color:var(--accent);color:var(--accent);}
+
+  .pl-edit-rows{display:grid;gap:8px;}
+  .pl-edit-rows .m-row{display:flex;gap:8px;align-items:center;}
+  .pl-edit-rows input{
+    font:inherit;color:var(--panel-ink);background:var(--chrome-bg);
+    border:1px solid var(--border);border-radius:8px;padding:9px 10px;min-height:42px;
+  }
+  .pl-edit-rows .m-name{flex:1;min-width:0;}
+  .pl-edit-rows .m-price{width:120px;text-align:right;font-variant-numeric:tabular-nums;}
+  .pl-add{border-style:dashed;color:var(--accent);}
+  .pl-reset{color:var(--danger);border-color:var(--border);font-size:13px;}
+
+  /* ---------- drawer (saved docs) ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(15,20,28,.45);z-index:40;
+    display:none;align-items:flex-start;justify-content:center;padding:24px 12px;
+  }
+  .overlay.open{display:flex;}
+  .drawer{
+    background:var(--panel);border:1px solid var(--border);border-radius:14px;
+    width:min(560px,100%);max-height:82vh;overflow-y:auto;
+    box-shadow:var(--shadow);padding:16px;
+  }
+  .drawer h2{font-size:15px;margin:0 0 12px;letter-spacing:.06em;}
+  .doc-item{
+    display:flex;align-items:center;gap:10px;
+    border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;
+  }
+  .doc-item.current{border-color:var(--accent);background:var(--accent-soft);}
+  .doc-item .info{flex:1;min-width:0;cursor:pointer;}
+  .doc-item .info .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .doc-item .info .s{font-size:12px;color:var(--panel-sub);font-variant-numeric:tabular-nums;}
+  .doc-item button{min-height:38px;padding:6px 10px;font-size:13px;}
+  .drawer-close{width:100%;margin-top:6px;}
+
+  .save-note{text-align:center;font-size:12px;color:var(--panel-sub);margin-top:14px;}
+
+  /* ---------- confirm dialog / PDF viewer ---------- */
+  #confirmOverlay{z-index:70;}   /* 保存一覧・歯式パネルより常に手前 */
+  #pdfOverlay{z-index:60;}
+  .confirm-box{width:min(440px,100%);}
+  .confirm-box p{margin:0;white-space:pre-line;line-height:1.7;}
+  .confirm-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap;}
+  .btn-danger{background:var(--danger);border-color:var(--danger);color:#fff;font-weight:600;}
+  .pdf-box{width:min(720px,100%);}
+  .pdf-box .sub{font-size:13px;color:var(--panel-sub);margin:-4px 0 12px;line-height:1.7;}
+  #pdfPages img{display:block;width:100%;border:1px solid var(--border);margin-bottom:10px;}
+  a.dl-link{
+    display:inline-flex;align-items:center;justify-content:center;
+    font:inherit;color:var(--panel-ink);background:var(--panel);
+    border:1px solid var(--border);border-radius:8px;
+    padding:9px 14px;min-height:42px;text-decoration:none;
+  }
+
+  /* ---------- tooth picker ---------- */
+  .tooth-drawer{width:min(660px,100%);}
+  .tooth-drawer .sub{font-size:12px;color:var(--panel-sub);margin:-6px 0 12px;}
+  .mouth-scroll{overflow-x:auto;padding-bottom:4px;}
+  .mouth{
+    display:grid;grid-template-columns:1fr 1fr;
+    min-width:580px;
+    font-variant-numeric:tabular-nums;
+  }
+  .quad{display:flex;flex-direction:column;gap:6px;padding:10px 8px;}
+  .quad.qur,.quad.qlr{align-items:flex-end;border-right:2px solid var(--panel-ink);}
+  .quad.qur,.quad.qul{border-bottom:2px solid var(--panel-ink);}
+  .quad .lbl{font-size:11px;color:var(--panel-sub);letter-spacing:.1em;}
+  .quad.qur .lbl,.quad.qlr .lbl{align-self:flex-start;}
+  .quad.qul .lbl,.quad.qll .lbl{align-self:flex-end;}
+  .trow{display:flex;gap:3px;}
+  .tooth{
+    width:33px;min-width:33px;min-height:40px;padding:0;
+    border-radius:8px;font-size:14px;
+    border:1px solid var(--border);background:var(--chrome-bg);color:var(--panel-ink);
+  }
+  .tooth.sel{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+  :root[data-theme="dark"] .tooth.sel{color:#0f1520;}
+  @media (prefers-color-scheme: dark){ .tooth.sel{color:#0f1520;} }
+  :root[data-theme="light"] .tooth.sel{color:#fff;}
+  .tooth-actions{display:flex;gap:8px;margin-top:14px;}
+  .tooth-actions .spacer{flex:1;}
+  .tooth-preview{
+    text-align:center;font-size:15px;letter-spacing:.2em;
+    margin-top:12px;color:var(--panel-ink);
+  }
+
+  /* ---------- print ---------- */
+  @page{size:A4 portrait;margin:0;}
+  @media print{
+    body{background:#fff;}
+    .toolbar,.pricelist,.save-note,.overlay,.item-del,.items-empty,.teeth-hint,.col-del,.c-del{display:none !important;}
+    .stage{max-width:none;padding:0;margin:0;}
+    .sheet-wrap{height:auto !important;overflow:visible;}
+    .sheet{
+      transform:none !important;box-shadow:none;
+      width:auto;min-height:269mm;margin:0;
+      color:#1c2430;background:#fff;
+    }
+    .sheet ::placeholder{color:transparent;}
+    .sheet input{border-bottom-color:transparent !important;background:transparent !important;}
+    .totals select{-webkit-appearance:none;appearance:none;color:#555;}
+  }
+</style>
+
+<div class="toolbar">
+  <h1>見積書作成</h1>
+  <button id="btnDocs">保存一覧</button>
+  <button id="btnNew">新規作成</button>
+  <button id="btnReset">リセット</button>
+  <button id="btnPrint" class="btn-primary">🖨 印刷用PDF</button>
+</div>
+
+<div class="stage">
+  <div class="sheet-wrap" id="sheetWrap">
+    <div class="sheet" id="sheet">
+      <h2 class="doc-title">御見積書</h2>
+      <div class="title-rule"></div>
+
+      <div class="head-row">
+        <div class="patient">
+          <input id="fPatient" data-field="patient" placeholder="患者名">
+          <span class="sama">様</span>
+        </div>
+        <div style="flex:1"></div>
+        <div class="issuer">
+          <div class="made-date">
+            <label for="fDate">作成日</label>
+            <input id="fDate" data-field="issueDate">
+          </div>
+          <input class="c-name" id="fClinicName" data-clinic="name" placeholder="医院名">
+          <input class="c-addr" id="fClinicAddr" data-clinic="address" placeholder="住所">
+          <input class="c-tel" id="fClinicTel" data-clinic="tel" placeholder="TEL：00-0000-0000">
+        </div>
+      </div>
+
+      <div class="grand">
+        <span class="label">お見積金額</span>
+        <span class="amount" id="grandTotal">¥0</span>
+        <span class="tax-note">（税込）</span>
+      </div>
+
+      <div class="items-area" id="itemsArea"></div>
+
+      <div class="totals-row">
+        <div class="totals-rule"></div>
+        <div class="totals">
+          <div class="row"><span>小計</span><span class="amt" id="tSub">¥0</span></div>
+          <div class="row">
+            <span>消費税<select id="fTax" data-field="taxRate" aria-label="税率">
+              <option value="0">（税込）</option>
+              <option value="8">（8%）</option>
+              <option value="10">（10%）</option>
+            </select></span>
+            <span class="amt" id="tTax">¥0</span>
+          </div>
+          <div class="row total"><span>合計</span><span class="amt" id="tTotal">¥0</span></div>
+        </div>
+      </div>
+      <div class="totals-bottom-rule"></div>
+
+      <div class="note-box">
+        <span class="note-label">備考</span>
+        <textarea id="fNote" data-field="note" rows="3" placeholder="有効期限、お支払い条件など"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="pricelist">
+    <div class="pl-head">
+      <h2>料金表から追加</h2>
+      <button id="btnPlEdit">料金を編集</button>
+    </div>
+    <p class="pl-hint" id="plHint">項目をタップすると見積書に追加されます（全て税込価格）。</p>
+    <div class="tabs" id="plTabs"></div>
+    <div id="plBody"></div>
+  </div>
+
+  <p class="save-note">✓ 入力内容・料金の変更はこの端末（ブラウザ）に自動保存されます</p>
+</div>
+
+<div class="overlay" id="confirmOverlay">
+  <div class="drawer confirm-box" role="alertdialog" aria-labelledby="confirmMsg">
+    <p id="confirmMsg"></p>
+    <div class="confirm-actions">
+      <button id="btnConfirmCancel">キャンセル</button>
+      <button id="btnConfirmOk" class="btn-danger">OK</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="pdfOverlay">
+  <div class="drawer pdf-box" role="dialog" aria-label="印刷用PDF">
+    <h2>印刷</h2>
+    <p class="sub" id="pdfHint">下のプレビュー画像を<strong>長押し</strong>→「共有…」→「<strong>プリント</strong>」で印刷できます。<br>PDFファイルとして残したい場合は「PDFを保存」を押してください。</p>
+    <div id="pdfPages"></div>
+    <div class="confirm-actions">
+      <a class="dl-link" id="pdfDl" download="見積書.pdf">PDFを保存</a>
+      <button id="btnPdfClose">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="toothOverlay">
+  <div class="drawer tooth-drawer" role="dialog" aria-label="部位を選択">
+    <h2 id="toothTitle">部位を選択</h2>
+    <p class="sub">歯をタップして選択してください（数量は選択した本数に自動で連動します）</p>
+    <div class="mouth-scroll"><div class="mouth" id="mouthGrid"></div></div>
+    <div class="tooth-preview" id="toothPreview"></div>
+    <div class="tooth-actions">
+      <button id="btnDeciduous">乳歯（A〜E）を表示</button>
+      <div class="spacer"></div>
+      <button id="btnToothClear">クリア</button>
+      <button id="btnToothDone" class="btn-primary">完了</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="docsOverlay">
+  <div class="drawer" role="dialog" aria-label="保存した見積書">
+    <h2>保存した見積書</h2>
+    <div id="docsList"></div>
+    <button class="drawer-close" id="btnDocsClose">閉じる</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var LS_KEY = 'dental-mitsumori-v1';
+
+  /* ---------- default price list (料金表R7-8-25.xlsx より・税込) ---------- */
+  function DEFAULT_PRICES(){ return [
+    {tab:'C処', groups:[
+      {g:'C処置', items:[
+        {n:'歯髄温存トリートメント MTA', p:33000},
+        {n:'CRダイレクトボンディング', p:66000}
+      ]},
+      {g:'TeC', items:[
+        {n:'TeC院内作成', p:3300},
+        {n:'TeC技工所作成', p:5500},
+        {n:'TeCインプラント', p:22000},
+        {n:'即時インプラントプロビジョナル', p:55000}
+      ]},
+      {g:'デポジット・形成imp', items:[
+        {n:'形成imp', p:3300},
+        {n:'補綴前入金デポジット', p:11000},
+        {n:'義歯前入金デポジット', p:55000}
+      ]},
+      {g:'インレー', items:[
+        {n:'In5年安心保証プラン', p:11000},
+        {n:'ハイブリッドIn', p:56100},
+        {n:'オールセラミックIn', p:77000},
+        {n:'ジルコニアIn', p:77000},
+        {n:'ゴールドIn', p:88000}
+      ]},
+      {g:'インレー（前入金済み）', items:[
+        {n:'（前入金済み）ハイブリッドIn', p:45100},
+        {n:'（前入金済み）オールセラミックIn', p:66000},
+        {n:'（前入金済み）ジルコニアIn', p:66000},
+        {n:'（前入金済み）ゴールドIn', p:77000}
+      ]},
+      {g:'クラウン', items:[
+        {n:'Cr5年安心保証プラン', p:22000},
+        {n:'Br5年安心保証プラン', p:33000},
+        {n:'ラミネートベニア', p:143000},
+        {n:'ハイブリッドCr', p:100650},
+        {n:'ジルコニアCr', p:165000},
+        {n:'オールセラミックCr', p:176000},
+        {n:'ゴールドCr', p:176000},
+        {n:'メタルボンドCr', p:176000}
+      ]},
+      {g:'クラウン（前入金済み）', items:[
+        {n:'（前入金済み）ラミネートベニア', p:132000},
+        {n:'（前入金済み）ハイブリッドCr', p:89650},
+        {n:'（前入金済み）ジルコニアCr', p:154000},
+        {n:'（前入金済み）オールセラミックCr', p:165000},
+        {n:'（前入金済み）ゴールドCr', p:165000},
+        {n:'（前入金済み）メタルボンドCr', p:165000}
+      ]}
+    ]},
+    {tab:'インプラント', groups:[
+      {g:'保証・診査', items:[
+        {n:'インプラント5年安心保証プラン', p:33000},
+        {n:'インプラント10年安心保証プラン', p:55000},
+        {n:'インプラント診査・診断料', p:33000},
+        {n:'インプラントCT撮影料', p:22000}
+      ]},
+      {g:'手術・上部構造', items:[
+        {n:'インプラント1次手術', p:275000},
+        {n:'（SLActive,BLX）インプラント1次手術', p:308000},
+        {n:'インプラント2次手術', p:55000},
+        {n:'アバットメント（インプラント2次手術）', p:55000},
+        {n:'インプラントアバットメント', p:55000},
+        {n:'インプラント上部構造アバットメント含む', p:220000},
+        {n:'（前入金済み）インプラント上部構造アバットメント含む', p:209000},
+        {n:'インプラント上部構造アバットメントなし', p:165000},
+        {n:'（前入金済み）インプラント上部構造アバットメントなし', p:154000},
+        {n:'ガイド', p:66000},
+        {n:'スリーブ', p:8800},
+        {n:'他院セメントリテイン上部構造再セット', p:5500}
+      ]},
+      {g:'骨造成・テルプラグ', items:[
+        {n:'インプラント骨移植術', p:110000},
+        {n:'ソケットリフト', p:55000},
+        {n:'サイナスリフト', p:110000},
+        {n:'骨造成前歯小臼歯', p:66000},
+        {n:'骨造成大臼歯', p:110000},
+        {n:'テルプラグ', p:11000},
+        {n:'ボーンタック（1本単位）', p:5500}
+      ]},
+      {g:'メンブレン', items:[
+        {n:'ネオジェン（チタンなし非吸収性メンブレン）18×25mm', p:44000},
+        {n:'ネオジェン（チタンなし非吸収性メンブレン）29×14mm', p:55000},
+        {n:'ネオジェン（チタンなし非吸収性メンブレン）34×25mm', p:77000},
+        {n:'バイオガイド（吸収性メンブレン）13×25mm', p:55000},
+        {n:'バイオガイド（吸収性メンブレン）25×25mm', p:77000},
+        {n:'バイオガイド（吸収性メンブレン）40×50mm', p:165000},
+        {n:'チタンハニカムメンブレンサイズ S1', p:110000},
+        {n:'チタンハニカムメンブレンサイズ M1', p:143000},
+        {n:'チタンハニカムメンブレンサイズ L1', p:198000}
+      ]},
+      {g:'歯周形成外科', items:[
+        {n:'APF歯肉弁根尖側移動術', p:55000},
+        {n:'FGG遊離歯肉移植術', p:88000},
+        {n:'CTG結合組織移植術', p:110000},
+        {n:'CTG1歯追加料金', p:22000}
+      ]}
+    ]},
+    {tab:'ペリオ・外科', groups:[
+      {g:'ペリオ・外科処置', items:[
+        {n:'フラップ', p:33000},
+        {n:'骨造成前歯小臼歯', p:66000},
+        {n:'骨造成大臼歯', p:110000},
+        {n:'バイオガイド（吸収性メンブレン）13×25mm', p:55000},
+        {n:'バイオガイド（吸収性メンブレン）25×25mm', p:77000},
+        {n:'バイオガイド（吸収性メンブレン）40×50mm', p:165000},
+        {n:'クラウンレングスニング', p:55000},
+        {n:'歯牙移植', p:110000},
+        {n:'リフィット', p:66000},
+        {n:'エムドゲイン', p:55000}
+      ]}
+    ]},
+    {tab:'根治', groups:[
+      {g:'根管治療', items:[
+        {n:'MTA', p:33000},
+        {n:'ウォーキングブリーチ', p:33000},
+        {n:'ウォーキングブリーチ（薬剤交換）', p:5500},
+        {n:'コア', p:11000},
+        {n:'Ni-Ti', p:11000},
+        {n:'歯根端切除（自院処置歯）', p:66000},
+        {n:'歯根端切除（他院処置歯）', p:132000}
+      ]},
+      {g:'マイクロエンド', items:[
+        {n:'マイクロエンド（前歯抜髄）', p:77000},
+        {n:'マイクロエンド（小臼歯抜髄）', p:88000},
+        {n:'マイクロエンド（大臼歯抜髄）', p:110000},
+        {n:'マイクロエンド（前歯感染根治）', p:121000},
+        {n:'マイクロエンド（小臼歯感染根治）', p:132000},
+        {n:'マイクロエンド（大臼歯感染根治）', p:165000},
+        {n:'マイクロエンド（MTAセメント）', p:33000},
+        {n:'マイクロエンド（Ni-Ti）', p:22000},
+        {n:'マイクロエンド（破折診断）', p:11000}
+      ]}
+    ]},
+    {tab:'義歯', groups:[
+      {g:'義歯', items:[
+        {n:'TUM義歯', p:330000},
+        {n:'チタン金属床義歯', p:715000},
+        {n:'コバルトクロム金属床', p:495000},
+        {n:'（金属床シリコン）チタン', p:781000},
+        {n:'（金属床シリコン）コバルトクロム', p:561000},
+        {n:'シリコンデンチャー（レジン床シリコン）', p:660000},
+        {n:'ノンクラスプ義歯（1-4歯）', p:242000},
+        {n:'ノンクラスプ義歯（5-8歯）', p:330000},
+        {n:'ノンクラスプ義歯（9-13歯）', p:440000}
+      ]},
+      {g:'義歯（前入金済み）', items:[
+        {n:'（前入金済み）TUM義歯', p:275000},
+        {n:'（前入金済み）チタン金属床義歯', p:660000},
+        {n:'（前入金済み）コバルトクロム金属床', p:440000},
+        {n:'（前入金済み）（金属床シリコン）チタン', p:726000},
+        {n:'（前入金済み）（金属床シリコン）コバルトクロム', p:506000},
+        {n:'（前入金済み）シリコンデンチャー（レジン床シリコン）', p:605000},
+        {n:'（前入金済み）ノンクラスプ義歯（1-4歯）', p:187000},
+        {n:'（前入金済み）ノンクラスプ義歯（5-8歯）', p:275000},
+        {n:'（前入金済み）ノンクラスプ義歯（9-13歯）', p:385000}
+      ]}
+    ]},
+    {tab:'DHメニュー', groups:[
+      {g:'ホワイトニング', items:[
+        {n:'オフィスホワイトニング（1回）', p:38500},
+        {n:'オフィスホワイトニング3回プラン（グロウプラン）', p:93500},
+        {n:'ホームホワイトニング', p:33000},
+        {n:'デイリープラン（マウスピース＋ジェル6本）', p:36300},
+        {n:'パーフェクトプラン（オフィス1回＋ホーム）', p:60500},
+        {n:'片顎ホワイトニングトレーのみ', p:5500},
+        {n:'ホワイトニングトレーのみ', p:11000},
+        {n:'ホワイトニングジェル1本', p:5500},
+        {n:'ホーム追加ジェル4本', p:11000},
+        {n:'ホーム追加ジェル1本', p:3300}
+      ]},
+      {g:'クリーニング', items:[
+        {n:'エアフロー（ジェットクリーニング）', p:8800}
+      ]}
+    ]},
+    {tab:'NG', groups:[
+      {g:'ナイトガード', items:[
+        {n:'NG（ナイトガード）', p:0}
+      ]},
+      {g:'スポーツ用マウスピース', items:[
+        {n:'POWERBITE 1枚法（一般）', p:18000},
+        {n:'POWERBITE 1枚法（学生）', p:16000},
+        {n:'POWERBITE 2枚法（ラミネート・ロゴ等入り可）', p:37000}
+      ]}
+    ]}
+  ]; }
+
+  /* ---------- state ---------- */
+  function todayStr(){
+    var d=new Date(), p=function(n){return (n<10?'0':'')+n;};
+    return d.getFullYear()+'/'+p(d.getMonth()+1)+'/'+p(d.getDate());
+  }
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+  function newDoc(){
+    return {
+      id: uid(), patient:'', issueDate: todayStr(), taxRate:0,
+      items:[], note:'', updatedAt: Date.now()
+    };
+  }
+
+  var state = { docs:[], currentId:null, prices:null, clinic:{name:'',address:'',tel:''} };
+  try{
+    var saved = JSON.parse(localStorage.getItem(LS_KEY));
+    if(saved && saved.docs && saved.docs.length) state = saved;
+  }catch(e){}
+  if(!state.docs.length){
+    var d0=newDoc();
+    state.docs=[d0]; state.currentId=d0.id;
+  }
+  if(!state.prices) state.prices = DEFAULT_PRICES();
+  if(!state.clinic) state.clinic = {name:'',address:'',tel:''};
+
+  /* 旧形式（歯式が文字列）からの移行 */
+  state.docs.forEach(function(d){
+    (d.items||[]).forEach(function(it){
+      if(!it.teeth) it.teeth={};
+      ['ur','ul','lr','ll'].forEach(function(q){
+        var v=it.teeth[q];
+        if(Array.isArray(v)) return;
+        var m=String(v==null?'':v).toUpperCase().match(/[1-8A-E]/g);
+        it.teeth[q]=m||[];
+      });
+    });
+  });
+
+  function cur(){
+    for(var i=0;i<state.docs.length;i++) if(state.docs[i].id===state.currentId) return state.docs[i];
+    state.currentId=state.docs[0].id;
+    return state.docs[0];
+  }
+
+  var saveTimer=null;
+  function save(){
+    clearTimeout(saveTimer);
+    saveTimer=setTimeout(function(){
+      cur().updatedAt=Date.now();
+      try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+    },250);
+  }
+
+  /* ---------- helpers ---------- */
+  function $(id){ return document.getElementById(id); }
+  function num(v){
+    if(v==null) return 0;
+    var n=parseFloat(String(v).replace(/[,，¥￥\s]/g,''));
+    return isNaN(n)?0:n;
+  }
+  function fmt(n){ return Math.floor(n).toLocaleString('ja-JP'); }
+  function yen(n){ return '¥'+fmt(n); }
+  function toothCount(t){
+    return ['ur','ul','lr','ll'].reduce(function(a,q){ return a+((t[q]||[]).length); },0);
+  }
+  /* 歯式の並び：正中に近い歯が中央線側に来るよう、右側は遠心→近心、左側は近心→遠心 */
+  function posVal(label){
+    if(/[1-8]/.test(label)) return Number(label);
+    return {A:1,B:2,C:3,D:4,E:5}[label]+0.4;
+  }
+  function qText(arr, rightSide){
+    var s=(arr||[]).slice().sort(function(a,b){
+      return rightSide ? posVal(b)-posVal(a) : posVal(a)-posVal(b);
+    });
+    return s.join('');
+  }
+  function teethNotation(t){
+    var up=qText(t.ur,true)+'｜'+qText(t.ul,false);
+    var low=qText(t.lr,true)+'｜'+qText(t.ll,false);
+    return {up:up, low:low};
+  }
+
+  /* ---------- 自前ダイアログ（サンドボックス内では confirm/alert が無効のため） ---------- */
+  var confirmResolve=null;
+  function appConfirm(msg, okLabel, hideCancel){
+    return new Promise(function(res){
+      confirmResolve=res;
+      $('confirmMsg').textContent=msg;
+      $('btnConfirmOk').textContent=okLabel||'OK';
+      $('btnConfirmCancel').style.display=hideCancel?'none':'';
+      $('confirmOverlay').classList.add('open');
+    });
+  }
+  function appNotice(msg){ return appConfirm(msg,'OK',true); }
+  function settleConfirm(v){
+    $('confirmOverlay').classList.remove('open');
+    if(confirmResolve){ var r=confirmResolve; confirmResolve=null; r(v); }
+  }
+  $('btnConfirmOk').addEventListener('click',function(){ settleConfirm(true); });
+  $('btnConfirmCancel').addEventListener('click',function(){ settleConfirm(false); });
+  $('confirmOverlay').addEventListener('click',function(e){ if(e.target===this) settleConfirm(false); });
+
+  /* ---------- totals ---------- */
+  function lineAmount(it){ return Math.floor(num(it.price)*num(it.qty)); }
+  function updateTotals(){
+    var doc=cur(), sub=0;
+    doc.items.forEach(function(it,i){
+      var a=lineAmount(it);
+      sub+=a;
+      var el=document.querySelector('[data-amount="'+i+'"]');
+      if(el) el.textContent=fmt(a);
+    });
+    var tax=Math.floor(sub*(Number(doc.taxRate)||0)/100);
+    $('tSub').textContent=yen(sub);
+    $('tTax').textContent=yen(tax);
+    $('tTotal').textContent=yen(sub+tax);
+    $('grandTotal').textContent=yen(sub+tax);
+  }
+
+  /* ---------- item table ---------- */
+  function renderItems(){
+    var doc=cur(), area=$('itemsArea');
+    area.innerHTML='';
+
+    var table=document.createElement('table');
+    table.className='items';
+    var thead=document.createElement('thead');
+    var htr=document.createElement('tr');
+    [['品名',''],['部位','col-teeth'],['数量','col-qty'],['単価','col-price'],['金額','col-amt'],['','col-del']].forEach(function(h){
+      var th=document.createElement('th');
+      th.textContent=h[0];
+      if(h[1]) th.className=h[1];
+      htr.appendChild(th);
+    });
+    thead.appendChild(htr);
+    table.appendChild(thead);
+
+    var tbody=document.createElement('tbody');
+    doc.items.forEach(function(it, idx){
+      var tr=document.createElement('tr');
+
+      /* 品名 */
+      var tdName=document.createElement('td');
+      tdName.className='c-name';
+      var nameIn=document.createElement('input');
+      nameIn.value=it.name; nameIn.placeholder='処置・材料名';
+      nameIn.addEventListener('input',function(){ it.name=nameIn.value; save(); });
+      tdName.appendChild(nameIn);
+      tr.appendChild(tdName);
+
+      /* 部位（歯式ミニ十字・タップで選択） */
+      var tdTeeth=document.createElement('td');
+      var teeth=document.createElement('div');
+      teeth.className='teeth'+(toothCount(it.teeth)===0?' empty':'');
+      teeth.setAttribute('role','button');
+      teeth.setAttribute('tabindex','0');
+      teeth.setAttribute('aria-label','部位を選択');
+      [['ur',true],['ul',false],['lr',true],['ll',false]].forEach(function(q){
+        var cell=document.createElement('div');
+        cell.className='q '+q[0];
+        cell.textContent=qText(it.teeth[q[0]], q[1]);
+        teeth.appendChild(cell);
+      });
+      if(toothCount(it.teeth)===0){
+        var hint=document.createElement('span');
+        hint.className='teeth-hint';
+        hint.textContent='部位';
+        teeth.appendChild(hint);
+      }
+      function open(){ openToothPicker(idx); }
+      teeth.addEventListener('click',open);
+      teeth.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(); } });
+      tdTeeth.appendChild(teeth);
+      tr.appendChild(tdTeeth);
+
+      /* 数量 */
+      var tdQty=document.createElement('td');
+      tdQty.className='c-qty';
+      var qtyIn=document.createElement('input');
+      qtyIn.className='i-qty'; qtyIn.inputMode='numeric'; qtyIn.value=it.qty;
+      qtyIn.addEventListener('input',function(){ it.qty=qtyIn.value; it.qtyManual=true; updateTotals(); save(); });
+      tdQty.appendChild(qtyIn);
+      tr.appendChild(tdQty);
+
+      /* 単価 */
+      var tdPrice=document.createElement('td');
+      tdPrice.className='c-price';
+      var priceIn=document.createElement('input');
+      priceIn.inputMode='numeric';
+      priceIn.value=it.price!==''&&it.price!=null?fmt(num(it.price)):'';
+      priceIn.addEventListener('input',function(){ it.price=priceIn.value; updateTotals(); save(); });
+      priceIn.addEventListener('blur',function(){ if(priceIn.value!=='') priceIn.value=fmt(num(priceIn.value)); });
+      tdPrice.appendChild(priceIn);
+      tr.appendChild(tdPrice);
+
+      /* 金額 */
+      var tdAmt=document.createElement('td');
+      tdAmt.className='c-amt';
+      tdAmt.setAttribute('data-amount', idx);
+      tdAmt.textContent=fmt(lineAmount(it));
+      tr.appendChild(tdAmt);
+
+      /* 削除（画面のみ） */
+      var tdDel=document.createElement('td');
+      tdDel.className='c-del';
+      var del=document.createElement('button');
+      del.className='item-del'; del.textContent='✕'; del.title='この項目を削除';
+      del.addEventListener('click',function(){
+        doc.items.splice(idx,1);
+        renderItems(); updateTotals(); save(); fitSheet();
+      });
+      tdDel.appendChild(del);
+      tr.appendChild(tdDel);
+
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    area.appendChild(table);
+
+    if(!doc.items.length){
+      var e=document.createElement('div');
+      e.className='items-empty';
+      e.textContent='下の料金表から項目をタップして追加してください';
+      area.appendChild(e);
+    }
+  }
+
+  /* ---------- header / clinic fields ---------- */
+  function bindFields(){
+    var doc=cur();
+    document.querySelectorAll('[data-field]').forEach(function(el){
+      var f=el.dataset.field;
+      el.value = doc[f]!=null ? doc[f] : '';
+    });
+    document.querySelectorAll('[data-clinic]').forEach(function(el){
+      el.value = state.clinic[el.dataset.clinic]||'';
+    });
+  }
+  document.querySelectorAll('[data-field]').forEach(function(el){
+    el.addEventListener('input',function(){
+      cur()[el.dataset.field]=el.value;
+      if(el.id==='fTax') updateTotals();
+      save();
+    });
+  });
+  document.querySelectorAll('[data-clinic]').forEach(function(el){
+    el.addEventListener('input',function(){
+      state.clinic[el.dataset.clinic]=el.value;
+      save();
+    });
+  });
+
+  /* ---------- price list panel ---------- */
+  var activeTab=0, plEditing=false;
+  function renderTabs(){
+    var tabs=$('plTabs');
+    tabs.innerHTML='';
+    state.prices.forEach(function(t, i){
+      var b=document.createElement('button');
+      b.className='tab'+(i===activeTab?' active':'');
+      b.textContent=t.tab;
+      b.addEventListener('click',function(){ activeTab=i; renderTabs(); renderPlBody(); });
+      tabs.appendChild(b);
+    });
+  }
+  function renderPlBody(){
+    var body=$('plBody');
+    body.innerHTML='';
+    var t=state.prices[activeTab];
+    if(!t) return;
+    $('btnPlEdit').textContent=plEditing?'編集を終了':'料金を編集';
+    $('plHint').textContent=plEditing
+      ? '名前・価格を直接編集できます。変更は自動保存されます。'
+      : '項目をタップすると見積書に追加されます（全て税込価格）。';
+
+    t.groups.forEach(function(gr){
+      var g=document.createElement('div');
+      g.className='group';
+      var h=document.createElement('h3'); h.textContent=gr.g; g.appendChild(h);
+
+      if(!plEditing){
+        var chips=document.createElement('div');
+        chips.className='chips';
+        gr.items.forEach(function(m){
+          var c=document.createElement('button');
+          c.className='chip';
+          var s1=document.createElement('span'); s1.textContent=m.n||'(無名)';
+          var s2=document.createElement('span'); s2.className='price'; s2.textContent=yen(m.p||0);
+          c.appendChild(s1); c.appendChild(s2);
+          c.addEventListener('click',function(){
+            cur().items.push({name:m.n, price:m.p, qty:'1', qtyManual:false, teeth:{ur:[],ul:[],lr:[],ll:[]}});
+            renderItems(); updateTotals(); save(); fitSheet();
+          });
+          chips.appendChild(c);
+        });
+        g.appendChild(chips);
+      }else{
+        var rows=document.createElement('div');
+        rows.className='pl-edit-rows';
+        gr.items.forEach(function(m, mi){
+          var row=document.createElement('div');
+          row.className='m-row';
+          var ni=document.createElement('input');
+          ni.className='m-name'; ni.value=m.n; ni.placeholder='項目名';
+          ni.addEventListener('input',function(){ m.n=ni.value; save(); });
+          var pi=document.createElement('input');
+          pi.className='m-price'; pi.inputMode='numeric'; pi.value=m.p?fmt(m.p):'';
+          pi.placeholder='税込価格';
+          pi.addEventListener('input',function(){ m.p=num(pi.value); save(); });
+          pi.addEventListener('blur',function(){ if(pi.value!=='') pi.value=fmt(num(pi.value)); });
+          var del=document.createElement('button');
+          del.textContent='削除';
+          del.addEventListener('click',function(){
+            gr.items.splice(mi,1); renderPlBody(); save();
+          });
+          row.appendChild(ni); row.appendChild(pi); row.appendChild(del);
+          rows.appendChild(row);
+        });
+        var add=document.createElement('button');
+        add.className='pl-add'; add.textContent='＋ '+gr.g+' に項目を追加';
+        add.addEventListener('click',function(){
+          gr.items.push({n:'', p:0});
+          renderPlBody(); save();
+        });
+        rows.appendChild(add);
+        g.appendChild(rows);
+      }
+      body.appendChild(g);
+    });
+
+    if(plEditing){
+      var reset=document.createElement('button');
+      reset.className='pl-reset';
+      reset.textContent='料金表を初期状態（Excel取込時）に戻す';
+      reset.addEventListener('click',function(){
+        appConfirm('料金表への変更をすべて破棄して、Excel取込時の内容に戻しますか？','初期状態に戻す').then(function(ok){
+          if(!ok) return;
+          state.prices=DEFAULT_PRICES();
+          if(activeTab>=state.prices.length) activeTab=0;
+          renderTabs(); renderPlBody(); save();
+        });
+      });
+      body.appendChild(reset);
+    }
+  }
+  $('btnPlEdit').addEventListener('click',function(){
+    plEditing=!plEditing; renderPlBody();
+  });
+
+  /* ---------- tooth picker ---------- */
+  var pickerIdx=null, showDeciduous=false;
+  var PERM=['8','7','6','5','4','3','2','1'];
+  var DEC=['E','D','C','B','A'];
+
+  function pickerItem(){
+    var doc=cur();
+    return (pickerIdx!=null && doc.items[pickerIdx]) ? doc.items[pickerIdx] : null;
+  }
+  function openToothPicker(idx){
+    pickerIdx=idx;
+    var it=pickerItem();
+    if(!it) return;
+    showDeciduous = ['ur','ul','lr','ll'].some(function(q){
+      return (it.teeth[q]||[]).some(function(x){ return /[A-E]/.test(x); });
+    });
+    $('toothTitle').textContent='部位を選択'+(it.name?'：'+it.name:'');
+    renderMouth();
+    $('toothOverlay').classList.add('open');
+  }
+  function closeToothPicker(){
+    $('toothOverlay').classList.remove('open');
+    pickerIdx=null;
+    renderItems(); updateTotals(); save(); fitSheet();
+  }
+  function syncQtyFromTeeth(it){
+    if(it.qtyManual) return;
+    var c=toothCount(it.teeth);
+    it.qty = c>0 ? String(c) : '1';
+  }
+  function renderMouth(){
+    var it=pickerItem();
+    if(!it) return;
+    var grid=$('mouthGrid');
+    grid.innerHTML='';
+    /* 診察者から見た配置：向かって左＝患者の右側 */
+    [
+      {q:'ur', cls:'qur', lbl:'右上', right:true},
+      {q:'ul', cls:'qul', lbl:'左上', right:false},
+      {q:'lr', cls:'qlr', lbl:'右下', right:true},
+      {q:'ll', cls:'qll', lbl:'左下', right:false}
+    ].forEach(function(cfg){
+      var quad=document.createElement('div');
+      quad.className='quad '+cfg.cls;
+      var lbl=document.createElement('span');
+      lbl.className='lbl'; lbl.textContent=cfg.lbl;
+      var lower = cfg.q==='lr'||cfg.q==='ll';
+      if(!lower) quad.appendChild(lbl);
+
+      function makeRow(labels){
+        var row=document.createElement('div');
+        row.className='trow';
+        var ordered = cfg.right ? labels : labels.slice().reverse();
+        ordered.forEach(function(lab){
+          var b=document.createElement('button');
+          b.className='tooth'+(((it.teeth[cfg.q]||[]).indexOf(lab)>=0)?' sel':'');
+          b.textContent=lab;
+          b.addEventListener('click',function(){
+            var arr=it.teeth[cfg.q]||(it.teeth[cfg.q]=[]);
+            var i=arr.indexOf(lab);
+            if(i>=0) arr.splice(i,1); else arr.push(lab);
+            syncQtyFromTeeth(it);
+            renderMouth(); save();
+          });
+          row.appendChild(b);
+        });
+        return row;
+      }
+      var rows=[makeRow(PERM)];
+      if(showDeciduous) rows.push(makeRow(DEC));
+      if(lower) rows.reverse();
+      rows.forEach(function(r){ quad.appendChild(r); });
+      if(lower) quad.appendChild(lbl);
+      grid.appendChild(quad);
+    });
+
+    var n=teethNotation(it.teeth), c=toothCount(it.teeth);
+    $('toothPreview').textContent = c>0 ? (n.up+'　'+n.low+'　（'+c+'本）') : '未選択';
+    $('btnDeciduous').textContent = showDeciduous ? '乳歯（A〜E）を隠す' : '乳歯（A〜E）を表示';
+  }
+  $('btnDeciduous').addEventListener('click',function(){ showDeciduous=!showDeciduous; renderMouth(); });
+  $('btnToothClear').addEventListener('click',function(){
+    var it=pickerItem();
+    if(!it) return;
+    it.teeth={ur:[],ul:[],lr:[],ll:[]};
+    syncQtyFromTeeth(it);
+    renderMouth(); save();
+  });
+  $('btnToothDone').addEventListener('click',closeToothPicker);
+  $('toothOverlay').addEventListener('click',function(e){ if(e.target===this) closeToothPicker(); });
+
+  /* ---------- saved docs drawer ---------- */
+  function docTotal(d){
+    var sub=0;
+    d.items.forEach(function(it){ sub+=Math.floor(num(it.price)*num(it.qty)); });
+    return sub+Math.floor(sub*(Number(d.taxRate)||0)/100);
+  }
+  function renderDocs(){
+    var list=$('docsList');
+    list.innerHTML='';
+    var docs=state.docs.slice().sort(function(a,b){return b.updatedAt-a.updatedAt;});
+    docs.forEach(function(d){
+      var el=document.createElement('div');
+      el.className='doc-item'+(d.id===state.currentId?' current':'');
+
+      var info=document.createElement('div');
+      info.className='info';
+      var t=document.createElement('div'); t.className='t';
+      t.textContent=(d.patient||'（患者名未入力)')+' 様';
+      var s=document.createElement('div'); s.className='s';
+      s.textContent=d.issueDate+'　'+yen(docTotal(d))+(d.id===state.currentId?'　◀ 編集中':'');
+      info.appendChild(t); info.appendChild(s);
+      info.addEventListener('click',function(){
+        state.currentId=d.id; save(); closeDocs(); renderAll();
+      });
+      el.appendChild(info);
+
+      var dup=document.createElement('button');
+      dup.textContent='複製';
+      dup.addEventListener('click',function(){
+        var c=JSON.parse(JSON.stringify(d));
+        c.id=uid(); c.issueDate=todayStr(); c.updatedAt=Date.now();
+        state.docs.push(c); state.currentId=c.id;
+        save(); closeDocs(); renderAll();
+      });
+      el.appendChild(dup);
+
+      var del=document.createElement('button');
+      del.textContent='削除';
+      del.addEventListener('click',function(){
+        appConfirm('「'+(d.patient||'無題')+' 様」の見積書を削除しますか？','削除する').then(function(ok){
+          if(!ok) return;
+          state.docs=state.docs.filter(function(x){return x.id!==d.id;});
+          if(!state.docs.length){ state.docs=[newDoc()]; }
+          if(state.currentId===d.id) state.currentId=state.docs[0].id;
+          save(); renderDocs(); renderAll();
+        });
+      });
+      el.appendChild(del);
+
+      list.appendChild(el);
+    });
+  }
+  function closeDocs(){ $('docsOverlay').classList.remove('open'); }
+  $('btnDocs').addEventListener('click',function(){ renderDocs(); $('docsOverlay').classList.add('open'); });
+  $('btnDocsClose').addEventListener('click',closeDocs);
+  $('docsOverlay').addEventListener('click',function(e){ if(e.target===this) closeDocs(); });
+
+  $('btnNew').addEventListener('click',function(){
+    var n=newDoc();
+    state.docs.push(n); state.currentId=n.id;
+    save(); renderAll();
+    window.scrollTo({top:0});
+  });
+
+  $('btnReset').addEventListener('click',function(){
+    appConfirm('現在の見積書の内容（患者名・部位・項目）をすべて消去しますか？\n※料金表と医院情報はそのまま残ります','消去する').then(function(ok){
+      if(!ok) return;
+      var doc=cur();
+      doc.patient='';
+      doc.items=[];
+      doc.note='';
+      doc.issueDate=todayStr();
+      doc.taxRate=0;
+      save(); renderAll();
+      window.scrollTo({top:0});
+    });
+  });
+
+  /* ---------- PDF生成（A4 Canvas描画 → 自前PDF組み立て） ---------- */
+  var MM = 1654/210;                      /* px per mm（約200dpi） */
+  var SERIF = '"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP","MS PMincho",serif';
+  /* 配色（画面のシートと揃える） */
+  var C_INK='#1f2429', C_ACCENT='#1d5286', C_SOFT='#e9f1f8',
+      C_LABEL='#56789c', C_MUTED='#5c6a6e', C_HAIR='#d3dde7', C_FOOT='#3c4652';
+  function fpx(pt){ return pt/72*25.4*MM; }
+
+  function newPageCanvas(){
+    var cv=document.createElement('canvas');
+    cv.width=1654; cv.height=2339;
+    var ctx=cv.getContext('2d');
+    ctx.fillStyle='#ffffff';
+    ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.textBaseline='middle';
+    return {cv:cv, ctx:ctx};
+  }
+  function setFont(ctx,pt,bold){ ctx.font=(bold?'600 ':'')+fpx(pt)+'px '+SERIF; }
+  function measure(ctx,text,pt,bold,lsEm){
+    setFont(ctx,pt,bold);
+    var w=0;
+    for(var i=0;i<text.length;i++) w+=ctx.measureText(text[i]).width;
+    if(text.length>1) w+=(lsEm||0)*fpx(pt)*(text.length-1);
+    return w/MM;
+  }
+  /* x,y はmm。alignは 'left'|'center'|'right' */
+  function drawRect(ctx,x,y,w,h,color){
+    ctx.fillStyle=color;
+    ctx.fillRect(x*MM,y*MM,w*MM,h*MM);
+  }
+  function drawText(ctx,text,x,y,opt){
+    opt=opt||{};
+    var pt=opt.pt||10.5, bold=opt.bold||false, ls=opt.ls||0;
+    setFont(ctx,pt,bold);
+    ctx.fillStyle=opt.color||C_INK;
+    var total=measure(ctx,text,pt,bold,ls);
+    var sx = opt.align==='center' ? x-total/2 : (opt.align==='right' ? x-total : x);
+    var px=sx*MM;
+    for(var i=0;i<text.length;i++){
+      ctx.fillText(text[i],px,y*MM);
+      px+=ctx.measureText(text[i]).width + ls*fpx(pt);
+    }
+  }
+  function drawLine(ctx,x1,y1,x2,y2,wMm,color){
+    ctx.strokeStyle=color||C_INK;
+    ctx.lineWidth=wMm*MM;
+    ctx.beginPath();
+    ctx.moveTo(x1*MM,y1*MM);
+    ctx.lineTo(x2*MM,y2*MM);
+    ctx.stroke();
+  }
+
+  function renderQuotePages(){
+    var doc=cur();
+    var L=18,R=192;
+    var pages=[];
+    var p=newPageCanvas(); pages.push(p);
+    var ctx=p.ctx;
+
+    /* --- タイトル --- */
+    drawText(ctx,'御見積書',105,23,{pt:18,bold:true,ls:.9,align:'center',color:C_ACCENT});
+    drawLine(ctx,L,28.5,R,28.5,.35,C_ACCENT);
+    drawLine(ctx,L,29.7,R,29.7,.8,C_ACCENT);
+
+    /* 文字列を幅maxWmmで折り返し */
+    function wrapText(text,pt,maxW){
+      var out=[];
+      String(text||'').split('\n').forEach(function(par){
+        var line='';
+        for(var i=0;i<par.length;i++){
+          var t=line+par[i];
+          if(measure(ctx,t,pt,false,0)>maxW && line!==''){ out.push(line); line=par[i]; }
+          else line=t;
+        }
+        out.push(line);
+      });
+      return out;
+    }
+
+    /* --- 宛名（左）・作成日と医院情報（右） --- */
+    var pname=(doc.patient||'')+'';
+    drawText(ctx,pname,L+1,42,{pt:13.5,ls:.1});
+    var nw=measure(ctx,pname,13.5,false,.1);
+    drawText(ctx,'様',L+4+nw,42.5,{pt:11.5});
+    drawLine(ctx,L,46,L+88,46,.3);
+
+    drawText(ctx,doc.issueDate||'',R,36,{pt:10,align:'right'});
+    var dw=measure(ctx,doc.issueDate||'',10,false,0);
+    drawText(ctx,'作成日',R-dw-4,36.2,{pt:8.5,align:'right',color:C_LABEL});
+    var iy=43;
+    if(state.clinic.name){ drawText(ctx,state.clinic.name,R,iy,{pt:11,bold:true,align:'right',color:C_ACCENT}); iy+=5.5; }
+    if(state.clinic.address){ drawText(ctx,state.clinic.address,R,iy,{pt:8.5,align:'right',color:C_FOOT}); iy+=4.5; }
+    if(state.clinic.tel){ drawText(ctx,state.clinic.tel,R,iy,{pt:8.5,align:'right',color:C_FOOT}); }
+
+    /* --- お見積金額 --- */
+    var sub=0;
+    doc.items.forEach(function(it){ sub+=lineAmount(it); });
+    var tax=Math.floor(sub*(Number(doc.taxRate)||0)/100);
+    var total=sub+tax;
+    drawRect(ctx,L,58,R-L,14,C_SOFT);
+    drawLine(ctx,L,58,R,58,.3,C_ACCENT);
+    drawLine(ctx,L,72,R,72,.3,C_ACCENT);
+    var g1='お見積金額', g2=yen(total), g3='（税込）';
+    var w1=measure(ctx,g1,10.5,false,.5), w2=measure(ctx,g2,17,true,.05), w3=measure(ctx,g3,8.5,false,0);
+    var gw=w1+7+w2+3+w3, gx=105-gw/2;
+    drawText(ctx,g1,gx,65,{pt:10.5,ls:.5});
+    drawText(ctx,g2,gx+w1+7,65,{pt:17,bold:true,ls:.05,color:C_ACCENT});
+    drawText(ctx,g3,gx+w1+7+w2+3,65.8,{pt:8.5,color:C_LABEL});
+
+    /* --- 明細テーブル --- */
+    /* 列: 品名 L..104 / 部位 104..140 / 数量 140..152 / 単価 152..172 / 金額 172..R */
+    var cTeethL=104, cTeethR=140, cQtyC=146, cPriceR=170, cAmtR=190;
+    function drawTableHeader(yTop){
+      drawRect(ctx,L,yTop,R-L,9,C_SOFT);
+      drawLine(ctx,L,yTop,R,yTop,.35,C_ACCENT);
+      drawLine(ctx,L,yTop+9,R,yTop+9,.35,C_ACCENT);
+      var hy=yTop+4.5;
+      drawText(ctx,'品 名',61,hy,{pt:9,ls:.25,align:'center',color:C_ACCENT,bold:true});
+      drawText(ctx,'部 位',122,hy,{pt:9,ls:.25,align:'center',color:C_ACCENT,bold:true});
+      drawText(ctx,'数量',146,hy,{pt:9,ls:.15,align:'center',color:C_ACCENT,bold:true});
+      drawText(ctx,'単 価',161,hy,{pt:9,ls:.25,align:'center',color:C_ACCENT,bold:true});
+      drawText(ctx,'金 額',181,hy,{pt:9,ls:.25,align:'center',color:C_ACCENT,bold:true});
+      return yTop+9;
+    }
+    /* --- 1ページに必ず収める：項目数に応じて行高と文字サイズを自動調整 --- */
+    var n=doc.items.length;
+    var noteLines=wrapText(doc.note||'',9.5,150);
+    if(!(doc.note||'').trim()) noteLines=[];
+    var noteH=Math.max(14, 7+noteLines.length*5.5+4);
+    var tableTop=78, pageBottom=284, totalsH=30, gapA=4, gapB=5;
+    var availRows=pageBottom-tableTop-9-gapA-totalsH-gapB-noteH;
+    var rowH = n>0 ? Math.min(14, Math.max(5.5, availRows/n)) : 14;
+    var rPt = Math.max(7.5, Math.min(10.5, 10.5*Math.pow(rowH/14,.6)));
+    var tPt = Math.max(6.5, rPt-1.5);
+
+    var y=drawTableHeader(tableTop);
+    doc.items.forEach(function(it){
+      var mid=y+rowH/2;
+      /* 品名（行高が十分なら2行まで折返し） */
+      var lines=wrapText(it.name||'',rPt,82);
+      if(rowH>=10 && lines.length>=2){
+        if(lines.length>2){ lines=lines.slice(0,2); lines[1]=lines[1].slice(0,-1)+'…'; }
+        drawText(ctx,lines[0],L+2,mid-2.6,{pt:rPt});
+        drawText(ctx,lines[1],L+2,mid+2.6,{pt:rPt});
+      }else{
+        var ln=lines[0]||'';
+        if(lines.length>1) ln=ln.slice(0,-1)+'…';
+        drawText(ctx,ln,L+2,mid,{pt:rPt});
+      }
+      /* 部位ミニ十字 */
+      var has=toothCount(it.teeth)>0;
+      var crossC = has ? '#3c4652' : '#c9d4e2';
+      var cx=122;
+      drawLine(ctx,cx,y+1,cx,y+rowH-1,.3,crossC);
+      drawLine(ctx,109,mid,135,mid,.3,crossC);
+      if(has){
+        var tOff=Math.max(1.9, rowH/4-0.7);
+        drawText(ctx,qText(it.teeth.ur,true), cx-1.5,mid-tOff,{pt:tPt,ls:.2,align:'right'});
+        drawText(ctx,qText(it.teeth.ul,false),cx+1.5,mid-tOff,{pt:tPt,ls:.2});
+        drawText(ctx,qText(it.teeth.lr,true), cx-1.5,mid+tOff,{pt:tPt,ls:.2,align:'right'});
+        drawText(ctx,qText(it.teeth.ll,false),cx+1.5,mid+tOff,{pt:tPt,ls:.2});
+      }
+      /* 数量・単価・金額 */
+      drawText(ctx,String(num(it.qty)),cQtyC,mid,{pt:rPt,align:'center'});
+      drawText(ctx,fmt(num(it.price)),cPriceR,mid,{pt:rPt,align:'right'});
+      drawText(ctx,fmt(lineAmount(it)),cAmtR,mid,{pt:rPt,align:'right'});
+      drawLine(ctx,L,y+rowH,R,y+rowH,.15,C_HAIR);
+      y+=rowH;
+    });
+
+    /* --- 合計欄 --- */
+    y+=gapA;
+    var tX=124;
+    drawText(ctx,'小計',tX+2,y+4,{pt:10.5});
+    drawText(ctx,yen(sub),R-1,y+4,{pt:10.5,align:'right'});
+    var taxLabel='消費税'+((Number(doc.taxRate)||0)>0?'（'+doc.taxRate+'%）':'（税込）');
+    drawText(ctx,taxLabel,tX+2,y+11,{pt:10.5});
+    drawText(ctx,yen(tax),R-1,y+11,{pt:10.5,align:'right'});
+    drawLine(ctx,tX,y+15,R,y+15,.3,C_ACCENT);
+    drawText(ctx,'合計',tX+2,y+21,{pt:12.5,bold:true,color:C_ACCENT});
+    drawText(ctx,yen(total),R-1,y+21,{pt:12.5,bold:true,align:'right',color:C_ACCENT});
+    drawLine(ctx,tX,y+25.5,R,y+25.5,.35,C_ACCENT);
+    drawLine(ctx,tX,y+26.7,R,y+26.7,.35,C_ACCENT);
+    y+=totalsH;
+
+    /* --- 備考欄（常に同一ページ） --- */
+    var boxTop=y+gapB;
+    ctx.strokeStyle='#a9bcd2';
+    ctx.lineWidth=.2*MM;
+    ctx.strokeRect(L*MM,boxTop*MM,(R-L)*MM,noteH*MM);
+    drawText(ctx,'備 考',L+3,boxTop+6,{pt:9,ls:.3,color:C_ACCENT});
+    noteLines.forEach(function(ln,i){
+      drawText(ctx,ln,L+17,boxTop+6+i*5.5,{pt:9.5,color:C_INK});
+    });
+
+    return pages.map(function(pg){ return pg.cv; });
+  }
+
+  function canvasJpegBytes(cv){
+    var d=cv.toDataURL('image/jpeg',0.93);
+    var b=atob(d.split(',')[1]);
+    var u=new Uint8Array(b.length);
+    for(var i=0;i<b.length;i++) u[i]=b.charCodeAt(i);
+    return u;
+  }
+  function buildPdf(canvases){
+    var W=595.28,H=841.89;
+    var enc=new TextEncoder();
+    var parts=[],offset=0,offsets=[];
+    function push(x){
+      var u=(typeof x==='string')?enc.encode(x):x;
+      parts.push(u); offset+=u.length;
+    }
+    function beginObj(){ offsets.push(offset); }
+    push('%PDF-1.4\n');
+    beginObj(); push('1 0 obj\n<</Type/Catalog/Pages 2 0 R>>\nendobj\n');
+    var kids=canvases.map(function(_,i){ return (3+i*3)+' 0 R'; }).join(' ');
+    beginObj(); push('2 0 obj\n<</Type/Pages/Kids['+kids+']/Count '+canvases.length+'>>\nendobj\n');
+    canvases.forEach(function(cv,i){
+      var pn=3+i*3, cn=pn+1, xn=pn+2;
+      beginObj();
+      push(pn+' 0 obj\n<</Type/Page/Parent 2 0 R/MediaBox[0 0 '+W+' '+H+']/Resources<</XObject<</Im'+i+' '+xn+' 0 R>>/ProcSet[/PDF/ImageC]>>/Contents '+cn+' 0 R>>\nendobj\n');
+      var cs='q '+W+' 0 0 '+H+' 0 0 cm /Im'+i+' Do Q';
+      beginObj();
+      push(cn+' 0 obj\n<</Length '+cs.length+'>>\nstream\n'+cs+'\nendstream\nendobj\n');
+      var img=canvasJpegBytes(cv);
+      beginObj();
+      push(xn+' 0 obj\n<</Type/XObject/Subtype/Image/Width '+cv.width+'/Height '+cv.height+'/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length '+img.length+'>>\nstream\n');
+      push(img);
+      push('\nendstream\nendobj\n');
+    });
+    var xrefStart=offset;
+    var n=offsets.length+1;
+    var xref='xref\n0 '+n+'\n0000000000 65535 f \n';
+    offsets.forEach(function(o){
+      xref+=('0000000000'+o).slice(-10)+' 00000 n \n';
+    });
+    push(xref);
+    push('trailer\n<</Size '+n+'/Root 1 0 R>>\nstartxref\n'+xrefStart+'\n%%EOF');
+    return new Blob(parts,{type:'application/pdf'});
+  }
+
+  var pdfUrl=null, pdfBlob=null, pdfName='';
+  /* Artifactページ等、iframe内で動いている場合は共有シート・ダウンロードが
+     ブロックされることがあるため、常にプレビューを直接開く */
+  var IN_FRAME=(function(){ try{ return window.self!==window.top; }catch(e){ return true; } })();
+  function openPdfOverlay(canvases, blob, name){
+    var wrap=$('pdfPages');
+    wrap.innerHTML='';
+    canvases.forEach(function(cv,i){
+      var img=document.createElement('img');
+      img.src=cv.toDataURL('image/jpeg',0.93);
+      img.alt='見積書 '+(i+1)+'ページ目';
+      wrap.appendChild(img);
+    });
+    if(pdfUrl) URL.revokeObjectURL(pdfUrl);
+    pdfUrl=URL.createObjectURL(blob);
+    pdfBlob=blob; pdfName=name;
+    var dl=$('pdfDl');
+    dl.href=pdfUrl;
+    dl.setAttribute('download',name);
+    if(IN_FRAME){
+      /* Artifactのsandbox内ではPDFダウンロード・共有シートが使えない */
+      dl.style.display='none';
+      $('pdfHint').innerHTML=
+        '<strong>印刷のしかた（iPad）</strong><br>'
+        +'① 下のプレビュー画像を<strong>長押し</strong> → 「<strong>“写真”に追加</strong>」で保存<br>'
+        +'② <strong>写真アプリ</strong>で画像を開く → 共有ボタン → 「<strong>プリント</strong>」<br>'
+        +'※共有メニューに「プリント」が見当たらないときは、メニューを<strong>下にスクロール</strong>すると出てきます。<br>'
+        +'※長押しメニューから直接「共有」した場合も、いちばん下までスクロールすると「プリント」があります。';
+    }
+    $('pdfOverlay').classList.add('open');
+  }
+  $('btnPdfClose').addEventListener('click',function(){ $('pdfOverlay').classList.remove('open'); });
+  $('pdfOverlay').addEventListener('click',function(e){ if(e.target===this) $('pdfOverlay').classList.remove('open'); });
+
+  /* iframe内では a[download] が無効なことがある → 共有シートで代替 */
+  $('pdfDl').addEventListener('click',function(e){
+    if(!IN_FRAME) return;
+    e.preventDefault();
+    var f=null;
+    try{ f=new File([pdfBlob], pdfName, {type:'application/pdf'}); }catch(err){}
+    var hint='この環境ではPDFファイルの保存が制限されています。上のプレビュー画像を長押し（またはコピー）して「写真に保存」→写真アプリから共有・プリントしてください。';
+    if(f && navigator.canShare && navigator.share && navigator.canShare({files:[f]})){
+      navigator.share({files:[f]}).catch(function(err){
+        if(!err || err.name!=='AbortError') appNotice(hint);
+      });
+    }else{
+      appNotice(hint);
+    }
+  });
+
+  $('btnPrint').addEventListener('click',function(){
+    var canvases, blob, name;
+    try{
+      canvases=renderQuotePages();
+      blob=buildPdf(canvases);
+      name='見積書_'+(cur().patient||'無題')+'_'+(cur().issueDate||'').replace(/\//g,'')+'.pdf';
+    }catch(e){
+      appNotice('PDFの作成に失敗しました: '+e.message);
+      return;
+    }
+    /* iPad/iPhone（単独ページで開いている場合）: 共有シートを直接開く */
+    var file=null;
+    try{ file=new File([blob], name, {type:'application/pdf'}); }catch(e){}
+    if(!IN_FRAME && file && navigator.canShare && navigator.share && navigator.canShare({files:[file]})){
+      navigator.share({files:[file]}).catch(function(err){
+        if(!err || err.name!=='AbortError') openPdfOverlay(canvases, blob, name);
+      });
+      return;
+    }
+    openPdfOverlay(canvases, blob, name);
+  });
+
+  /* ---------- fit sheet to screen ---------- */
+  function fitSheet(){
+    var wrap=$('sheetWrap'), sheet=$('sheet');
+    sheet.style.transform='none';
+    var w=sheet.offsetWidth, avail=wrap.clientWidth;
+    var s=Math.min(1, avail/w);
+    sheet.style.transform='scale('+s+')';
+    wrap.style.height=(sheet.offsetHeight*s)+'px';
+  }
+  window.addEventListener('resize',fitSheet);
+
+  /* ---------- boot ---------- */
+  function renderAll(){
+    bindFields(); renderItems(); updateTotals(); renderTabs(); renderPlBody();
+    requestAnimationFrame(fitSheet);
+  }
+  renderAll();
+})();
+</script>
