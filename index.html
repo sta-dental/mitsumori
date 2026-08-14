@@ -351,10 +351,19 @@
   }
 
   /* ---------- print ---------- */
+  /* 「印刷」ボタン用：生成した見積書画像をそのままA4で刷る領域（画面には出さない） */
+  #printArea{display:none;}
   @page{size:A4 portrait;margin:0;}
   @media print{
     body{background:#fff;}
     .toolbar,.pricelist,.save-note,.overlay,.item-del,.items-empty,.teeth-hint,.col-del,.c-del{display:none !important;}
+    body.print-image > *{display:none !important;}
+    body.print-image > #printArea{display:block !important;}
+    #printArea img{
+      display:block;width:210mm;height:297mm;object-fit:contain;
+      page-break-after:always;break-after:page;
+    }
+    #printArea img:last-child{page-break-after:auto;break-after:auto;}
     .stage{max-width:none;padding:0;margin:0;}
     .sheet-wrap{height:auto !important;overflow:visible;}
     .sheet{
@@ -373,7 +382,8 @@
   <button id="btnDocs">保存一覧</button>
   <button id="btnNew">新規作成</button>
   <button id="btnReset">リセット</button>
-  <button id="btnPrint" class="btn-primary">🖨 印刷用PDF</button>
+  <button id="btnPdf">📄 PDF・画像</button>
+  <button id="btnPrint" class="btn-primary">🖨 印刷</button>
 </div>
 
 <div class="stage">
@@ -457,14 +467,17 @@
 <div class="overlay" id="pdfOverlay">
   <div class="drawer pdf-box" role="dialog" aria-label="印刷用PDF">
     <h2>印刷</h2>
-    <p class="sub" id="pdfHint">下のプレビュー画像を<strong>長押し</strong>→「共有…」→「<strong>プリント</strong>」で印刷できます。<br>PDFファイルとして残したい場合は「PDFを保存」を押してください。</p>
+    <p class="sub" id="pdfHint">そのまま印刷するなら「<strong>🖨 このまま印刷</strong>」。<br>PDFファイルとして残す場合は「PDFを保存」、画像で残す場合は下のプレビューを<strong>長押し</strong>→「“写真”に追加」。</p>
     <div id="pdfPages"></div>
     <div class="confirm-actions">
+      <button id="btnPrintFromPdf" class="btn-primary">🖨 このまま印刷</button>
       <a class="dl-link" id="pdfDl" download="見積書.pdf">PDFを保存</a>
       <button id="btnPdfClose">閉じる</button>
     </div>
   </div>
 </div>
+
+<div id="printArea"></div>
 
 <div class="overlay" id="toothOverlay">
   <div class="drawer tooth-drawer" role="dialog" aria-label="部位を選択">
@@ -1463,11 +1476,9 @@
       /* Artifactのsandbox内ではPDFダウンロード・共有シートが使えない */
       dl.style.display='none';
       $('pdfHint').innerHTML=
-        '<strong>印刷のしかた（iPad）</strong><br>'
-        +'① 下のプレビュー画像を<strong>長押し</strong> → 「<strong>“写真”に追加</strong>」で保存<br>'
-        +'② <strong>写真アプリ</strong>で画像を開く → 共有ボタン → 「<strong>プリント</strong>」<br>'
-        +'※共有メニューに「プリント」が見当たらないときは、メニューを<strong>下にスクロール</strong>すると出てきます。<br>'
-        +'※長押しメニューから直接「共有」した場合も、いちばん下までスクロールすると「プリント」があります。';
+        'そのまま印刷するなら「<strong>🖨 このまま印刷</strong>」。<br>'
+        +'<strong>画像で残す場合</strong>：下のプレビュー画像を<strong>長押し</strong> → 「<strong>“写真”に追加</strong>」<br>'
+        +'→ <strong>写真アプリ</strong>で開く → 共有ボタン → 「<strong>プリント</strong>」（メニューを下にスクロールすると出てきます）';
     }
     $('pdfOverlay').classList.add('open');
   }
@@ -1490,26 +1501,74 @@
     }
   });
 
-  $('btnPrint').addEventListener('click',function(){
-    var canvases, blob, name;
+  /* 見積書を1回だけ描画して canvas・PDF・ファイル名をまとめて返す */
+  function makeQuote(){
     try{
-      canvases=renderQuotePages();
-      blob=buildPdf(canvases);
-      name='見積書_'+(cur().patient||'無題')+'_'+(cur().issueDate||'').replace(/\//g,'')+'.pdf';
+      var canvases=renderQuotePages();
+      return {
+        canvases:canvases,
+        blob:buildPdf(canvases),
+        name:'見積書_'+(cur().patient||'無題')+'_'+(cur().issueDate||'').replace(/\//g,'')+'.pdf'
+      };
     }catch(e){
-      appNotice('PDFの作成に失敗しました: '+e.message);
-      return;
+      appNotice('見積書の作成に失敗しました: '+e.message);
+      return null;
     }
+  }
+
+  /* ---------- ワンタップ印刷（PC・iPad共通：ブラウザの印刷画面を直接開く） ---------- */
+  function endPrint(){
+    document.body.classList.remove('print-image');
+    $('printArea').innerHTML='';
+  }
+  window.addEventListener('afterprint',endPrint);
+  function printQuote(canvases){
+    var area=$('printArea');
+    area.innerHTML='';
+    canvases.forEach(function(cv,i){
+      var img=document.createElement('img');
+      img.src=cv.toDataURL('image/jpeg',0.93);
+      img.alt='見積書 '+(i+1)+'ページ目';
+      area.appendChild(img);
+    });
+    /* 画像の展開を待ってから印刷（待たないと白紙で刷られることがある） */
+    var imgs=Array.prototype.slice.call(area.querySelectorAll('img'));
+    Promise.all(imgs.map(function(im){
+      return (im.decode ? im.decode() : Promise.resolve()).catch(function(){});
+    })).then(function(){
+      document.body.classList.add('print-image');
+      setTimeout(function(){
+        try{ window.print(); }
+        catch(e){ endPrint(); appNotice('印刷画面を開けませんでした: '+e.message); }
+        /* afterprintが来ない環境（iOS等）の保険 */
+        setTimeout(endPrint, 60000);
+      },80);
+    });
+  }
+
+  $('btnPrint').addEventListener('click',function(){
+    var q=makeQuote();
+    if(q) printQuote(q.canvases);
+  });
+  $('btnPrintFromPdf').addEventListener('click',function(){
+    $('pdfOverlay').classList.remove('open');
+    var q=makeQuote();
+    if(q) printQuote(q.canvases);
+  });
+
+  $('btnPdf').addEventListener('click',function(){
+    var q=makeQuote();
+    if(!q) return;
     /* iPad/iPhone（単独ページで開いている場合）: 共有シートを直接開く */
     var file=null;
-    try{ file=new File([blob], name, {type:'application/pdf'}); }catch(e){}
+    try{ file=new File([q.blob], q.name, {type:'application/pdf'}); }catch(e){}
     if(!IN_FRAME && file && navigator.canShare && navigator.share && navigator.canShare({files:[file]})){
       navigator.share({files:[file]}).catch(function(err){
-        if(!err || err.name!=='AbortError') openPdfOverlay(canvases, blob, name);
+        if(!err || err.name!=='AbortError') openPdfOverlay(q.canvases, q.blob, q.name);
       });
       return;
     }
-    openPdfOverlay(canvases, blob, name);
+    openPdfOverlay(q.canvases, q.blob, q.name);
   });
 
   /* ---------- fit sheet to screen ---------- */
