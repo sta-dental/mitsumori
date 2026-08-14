@@ -420,16 +420,7 @@
       <div class="totals-row">
         <div class="totals-rule"></div>
         <div class="totals">
-          <div class="row"><span>小計</span><span class="amt" id="tSub">¥0</span></div>
-          <div class="row">
-            <span>消費税<select id="fTax" data-field="taxRate" aria-label="税率">
-              <option value="0">（税込）</option>
-              <option value="8">（8%）</option>
-              <option value="10">（10%）</option>
-            </select></span>
-            <span class="amt" id="tTax">¥0</span>
-          </div>
-          <div class="row total"><span>合計</span><span class="amt" id="tTotal">¥0</span></div>
+          <div class="row total"><span>合計（税込）</span><span class="amt" id="tTotal">¥0</span></div>
         </div>
       </div>
       <div class="totals-bottom-rule"></div>
@@ -805,11 +796,9 @@
       var el=document.querySelector('[data-amount="'+i+'"]');
       if(el) el.textContent=fmt(a);
     });
-    var tax=Math.floor(sub*(Number(doc.taxRate)||0)/100);
-    $('tSub').textContent=yen(sub);
-    $('tTax').textContent=yen(tax);
-    $('tTotal').textContent=yen(sub+tax);
-    $('grandTotal').textContent=yen(sub+tax);
+    /* 料金表・単価はすべて税込のため、小計＝合計 */
+    $('tTotal').textContent=yen(sub);
+    $('grandTotal').textContent=yen(sub);
   }
 
   /* ---------- item table ---------- */
@@ -934,7 +923,6 @@
   document.querySelectorAll('[data-field]').forEach(function(el){
     el.addEventListener('input',function(){
       cur()[el.dataset.field]=el.value;
-      if(el.id==='fTax') updateTotals();
       save();
     });
   });
@@ -1137,7 +1125,7 @@
   function docTotal(d){
     var sub=0;
     d.items.forEach(function(it){ sub+=Math.floor(num(it.price)*num(it.qty)); });
-    return sub+Math.floor(sub*(Number(d.taxRate)||0)/100);
+    return sub;
   }
   function renderDocs(){
     var list=$('docsList');
@@ -1308,8 +1296,7 @@
     /* --- お見積金額 --- */
     var sub=0;
     doc.items.forEach(function(it){ sub+=lineAmount(it); });
-    var tax=Math.floor(sub*(Number(doc.taxRate)||0)/100);
-    var total=sub+tax;
+    var total=sub;   /* 単価はすべて税込 */
     drawRect(ctx,L,58,R-L,14,C_SOFT);
     drawLine(ctx,L,58,R,58,.3,C_ACCENT);
     drawLine(ctx,L,72,R,72,.3,C_ACCENT);
@@ -1340,7 +1327,7 @@
     var noteLines=wrapText(doc.note||'',9.5,150);
     if(!(doc.note||'').trim()) noteLines=[];
     var noteH=Math.max(14, 7+noteLines.length*5.5+4);
-    var tableTop=78, pageBottom=284, totalsH=30, gapA=4, gapB=5;
+    var tableTop=78, pageBottom=284, totalsH=17, gapA=4, gapB=5;
     var availRows=pageBottom-tableTop-9-gapA-totalsH-gapB-noteH;
     var rowH = n>0 ? Math.min(14, Math.max(5.5, availRows/n)) : 14;
     var rPt = Math.max(7.5, Math.min(10.5, 10.5*Math.pow(rowH/14,.6)));
@@ -1381,19 +1368,14 @@
       y+=rowH;
     });
 
-    /* --- 合計欄 --- */
+    /* --- 合計欄（単価がすべて税込なので1行） --- */
     y+=gapA;
     var tX=124;
-    drawText(ctx,'小計',tX+2,y+4,{pt:10.5});
-    drawText(ctx,yen(sub),R-1,y+4,{pt:10.5,align:'right'});
-    var taxLabel='消費税'+((Number(doc.taxRate)||0)>0?'（'+doc.taxRate+'%）':'（税込）');
-    drawText(ctx,taxLabel,tX+2,y+11,{pt:10.5});
-    drawText(ctx,yen(tax),R-1,y+11,{pt:10.5,align:'right'});
-    drawLine(ctx,tX,y+15,R,y+15,.3,C_ACCENT);
-    drawText(ctx,'合計',tX+2,y+21,{pt:12.5,bold:true,color:C_ACCENT});
-    drawText(ctx,yen(total),R-1,y+21,{pt:12.5,bold:true,align:'right',color:C_ACCENT});
-    drawLine(ctx,tX,y+25.5,R,y+25.5,.35,C_ACCENT);
-    drawLine(ctx,tX,y+26.7,R,y+26.7,.35,C_ACCENT);
+    drawLine(ctx,tX,y+1.5,R,y+1.5,.3,C_ACCENT);
+    drawText(ctx,'合計（税込）',tX+2,y+8,{pt:12.5,bold:true,color:C_ACCENT});
+    drawText(ctx,yen(total),R-1,y+8,{pt:12.5,bold:true,align:'right',color:C_ACCENT});
+    drawLine(ctx,tX,y+12.5,R,y+12.5,.35,C_ACCENT);
+    drawLine(ctx,tX,y+13.7,R,y+13.7,.35,C_ACCENT);
     y+=totalsH;
 
     /* --- 備考欄（常に同一ページ） --- */
