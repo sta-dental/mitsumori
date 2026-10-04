@@ -1458,10 +1458,16 @@
       img.alt='見積書 '+(i+1)+'ページ目';
       area.appendChild(img);
     });
-    /* 画像の展開を待ってから印刷（待たないと白紙で刷られることがある） */
+    /* 画像の読み込みを待ってから印刷（待たないと白紙で刷られることがある）
+       ※ display:none の中では img.decode() が解決しない環境があるため使わない */
     var imgs=Array.prototype.slice.call(area.querySelectorAll('img'));
     Promise.all(imgs.map(function(im){
-      return (im.decode ? im.decode() : Promise.resolve()).catch(function(){});
+      return new Promise(function(done){
+        if(im.complete && im.naturalWidth) return done();
+        var t=setTimeout(done,2000);
+        im.addEventListener('load',function(){ clearTimeout(t); done(); },{once:true});
+        im.addEventListener('error',function(){ clearTimeout(t); done(); },{once:true});
+      });
     })).then(function(){
       document.body.classList.add('print-image');
       setTimeout(function(){
